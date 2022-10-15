@@ -8,7 +8,7 @@ from tools.data_converter import lyft_converter as lyft_converter
 from tools.data_converter import nuscenes_converter as nuscenes_converter
 from tools.data_converter.create_gt_database import (
     GTDatabaseCreater, create_groundtruth_database)
-
+from tools.data_converter import avstack_converter as avstack_converter
 
 def kitti_data_prep(root_path,
                     info_prefix,
@@ -198,6 +198,18 @@ def waymo_data_prep(root_path,
         num_worker=workers).create()
 
 
+def avstack_data_prep(root_path, info_prefix, out_dir, dataset, workers):
+    splits = ['train', 'val']
+    for i, split in enumerate(splits):
+        load_dir = root_path
+        save_dir = osp.join(out_dir, 'avstack_format', dataset, split)
+        convert = avstack_converter.Avstack2nuScenes(
+            load_dir,
+            save_dir,
+        )
+
+
+
 parser = argparse.ArgumentParser(description='Data converter arg parser')
 parser.add_argument('dataset', metavar='kitti', help='name of the dataset')
 parser.add_argument(
@@ -310,4 +322,11 @@ if __name__ == '__main__':
             info_prefix=args.extra_tag,
             num_points=args.num_points,
             out_dir=args.out_dir,
+            workers=args.workers)
+    elif args.dataset == 'avstack':
+        avstack_data_prep(
+            root_path=args.root_path,
+            info_prefix=args.extra_tag,
+            out_dir=args.out_dir,
+            dataset=args.extra_tag,
             workers=args.workers)
