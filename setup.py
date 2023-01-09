@@ -6,9 +6,9 @@ import warnings
 from os import path as osp
 from setuptools import find_packages, setup
 
-import torch
-from torch.utils.cpp_extension import (BuildExtension, CppExtension,
-                                       CUDAExtension)
+# import torch
+# from torch.utils.cpp_extension import (BuildExtension, CppExtension,
+#                                        CUDAExtension)
 
 
 def readme():
@@ -225,5 +225,5 @@ if __name__ == '__main__':
             'optional': parse_requirements('requirements/optional.txt'),
             'mim': parse_requirements('requirements/mminstall.txt'),
         },
-        cmdclass={'build_ext': BuildExtension},
+        # cmdclass={'build_ext': BuildExtension},
         zip_safe=False)
