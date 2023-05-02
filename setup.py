@@ -221,5 +221,5 @@ if __name__ == '__main__':
             'mim': parse_requirements('requirements/mminstall.txt'),
         },
         ext_modules=[],
-        cmdclass={'build_ext': BuildExtension},
+        # cmdclass={'build_ext': BuildExtension},
         zip_safe=False)
