@@ -140,6 +140,13 @@ class DataBaseSampler(object):
 
         self.db_infos = db_infos
 
+        self.bbox_code_size = bbox_code_size
+        if bbox_code_size is not None:
+            for k, info_cls in self.db_infos.items():
+                for info in info_cls:
+                    info['box3d_lidar'] = info['box3d_lidar'][:self.
+                                                              bbox_code_size]
+
         # load sample groups
         # TODO: more elegant way to load sample groups
         self.sample_groups = []
@@ -147,6 +154,7 @@ class DataBaseSampler(object):
             self.sample_groups.append({name: int(num)})
 
         self.group_db_infos = self.db_infos  # just use db_infos
+
         self.sample_classes = []
         self.sample_max_nums = []
         for group_info in self.sample_groups:

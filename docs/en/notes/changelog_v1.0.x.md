@@ -108,6 +108,85 @@ A total of 9 developers contributed to this release.
 
 @Tai-Wang, @ZwwWayne, @filaPro, @lianqing11, @ZCMax, @HuangJunJie2017, @Xiangxu-0103, @ChonghaoSima, @VVsssssk
 
+### v1.0.0rc6 (2/12/2022)
+
+#### New Features
+
+- Add `Projects/` folder and the first example project (#2082)
+
+#### Improvements
+
+- Update Waymo converter to save storage space (#1759)
+- Update model link and performance of CenterPoint (#1916)
+
+#### Bug Fixes
+
+- Fix GPU memory occupancy problem in PointRCNN (#1928)
+- Fix sampling bug in `IoUNegPiecewiseSampler` (#2018)
+
+#### Contributors
+
+A total of 6 developers contributed to this release.
+
+@oyel, @zzj403, @VVsssssk, @Tai-Wang, @tpoisonooo, @JingweiZhang12, @ZCMax
+
+### v1.0.0rc5 (11/10/2022)
+
+#### New Features
+
+- Support ImVoxelNet on SUN RGB-D (#1738)
+
+#### Improvements
+
+- Fix the cross-codebase reference problem in metafile README (#1644)
+- Update the Chinese documentation about getting started (#1715)
+- Fix docs link and add docs link checker (#1811)
+
+#### Bug Fixes
+
+- Fix a visualization bug that is potentially triggered by empty prediction labels (#1725)
+- Fix point cloud segmentation visualization bug due to wrong parameter passing (#1858)
+- Fix Nan loss bug during PointRCNN training (#1874)
+
+#### Contributors
+
+A total of 11 developers contributed to this release.
+
+@ZwwWayne, @Tai-Wang, @filaPro, @VVsssssk, @ZCMax, @Xiangxu-0103, @holtvogt, @tpoisonooo, @lianqing01, @TommyZihao, @aditya9710
+
+### v1.0.0rc4 (8/8/2022)
+
+#### Highlights
+
+- Support [FCAF3D](https://arxiv.org/pdf/2112.00322.pdf)
+
+#### New Features
+
+- Support [FCAF3D](https://arxiv.org/pdf/2112.00322.pdf) (#1547)
+- Add the transformation to support multi-camera 3D object detection (#1580)
+- Support lift-splat-shoot view transformer (#1598)
+
+#### Improvements
+
+- Remove the limitation of the maximum number of points during SUN RGB-D preprocessing (#1555)
+- Support circle CI (#1647)
+- Add mim to extras_require in setup.py (#1560, #1574)
+- Update dockerfile package version (#1697)
+
+#### Bug Fixes
+
+- Flip yaw angle for DepthInstance3DBoxes.overlaps (#1548, #1556)
+- Fix DGCNN configs (#1587)
+- Fix bbox head not registered bug (#1625)
+- Fix missing objects in S3DIS preprocessing (#1665)
+- Fix spconv2.0 model loading bug (#1699)
+
+#### Contributors
+
+A total of 9 developers contributed to this release.
+
+@Tai-Wang, @ZwwWayne, @filaPro, @lianqing11, @ZCMax, @HuangJunJie2017, @Xiangxu-0103, @ChonghaoSima, @VVsssssk
+
 ### v1.0.0rc3 (8/6/2022)
 
 #### Highlights

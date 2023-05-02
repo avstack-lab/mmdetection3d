@@ -219,9 +219,8 @@ class PointRCNNBboxHead(BaseModule):
         Returns:
             tuple[torch.Tensor]: Score of class and bbox predictions.
         """
-        input_data = feats.clone().detach()
         xyz_input = input_data[..., 0:self.in_channels].transpose(
-            1, 2).unsqueeze(dim=3).contiguous().clone().detach()
+            1, 2).unsqueeze(dim=3).contiguous()
         xyz_features = self.xyz_up_layer(xyz_input)
         rpn_features = input_data[..., self.in_channels:].transpose(
             1, 2).unsqueeze(dim=3)

@@ -25,7 +25,7 @@ class PointPillarsScatter(nn.Module):
         self.fp16_enabled = False
 
     def forward(self, voxel_features, coors, batch_size=None):
-        """Foraward function to scatter features."""
+        """Forward function to scatter features."""
         # TODO: rewrite the function in a batch manner
         # no need to deal with different batch cases
         if batch_size is not None:
@@ -37,7 +37,7 @@ class PointPillarsScatter(nn.Module):
         """Scatter features of single sample.
 
         Args:
-            voxel_features (torch.Tensor): Voxel features in shape (N, M, C).
+            voxel_features (torch.Tensor): Voxel features in shape (N, C).
             coors (torch.Tensor): Coordinates of each voxel.
                 The first column indicates the sample ID.
         """
@@ -61,7 +61,7 @@ class PointPillarsScatter(nn.Module):
         """Scatter features of single sample.
 
         Args:
-            voxel_features (torch.Tensor): Voxel features in shape (N, M, C).
+            voxel_features (torch.Tensor): Voxel features in shape (N, C).
             coors (torch.Tensor): Coordinates of each voxel in shape (N, 4).
                 The first column indicates the sample ID.
             batch_size (int): Number of samples in the current batch.

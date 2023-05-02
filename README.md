@@ -156,8 +156,6 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
       </ul>
       </td>
     </tr>
-</td>
-    </tr>
   </tbody>
 </table>
 

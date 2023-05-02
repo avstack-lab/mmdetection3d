@@ -1,6 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from .base_3droi_head import Base3DRoIHead
-from .bbox_heads import PartA2BboxHead
+from .bbox_heads import H3DBboxHead, PartA2BboxHead, PointRCNNBboxHead
 from .h3d_roi_head import H3DRoIHead
 from .mask_heads import PointwiseSemanticHead, PrimitiveHead
 from .part_aggregation_roi_head import PartAggregationROIHead

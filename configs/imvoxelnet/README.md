@@ -14,9 +14,8 @@ In this paper, we introduce the task of multi-view RGB-based 3D object detection
 
 ## Introduction
 
-We implement a monocular 3D detector ImVoxelNet and provide its results and checkpoints on KITTI dataset.
-Results for SUN RGB-D, ScanNet and nuScenes are currently available in ImVoxelNet authors
-[repo](https://github.com/saic-vul/imvoxelnet) (based on mmdetection3d).
+We implement a monocular 3D detector ImVoxelNet and provide its results and checkpoints on KITTI and SUN RGB-D datasets.
+Inference time is given for a single NVidia RTX 3090 GPU. Results for ScanNet and nuScenes are currently available in ImVoxelNet authors [repo](https://github.com/saic-vul/imvoxelnet) (based on mmdetection3d).
 
 ## Results and models
 
@@ -38,7 +37,8 @@ Results for SUN RGB-D, ScanNet and nuScenes are currently available in ImVoxelNe
 @article{rukhovich2021imvoxelnet,
   title={ImVoxelNet: Image to Voxels Projection for Monocular and Multi-View General-Purpose 3D Object Detection},
   author={Danila Rukhovich, Anna Vorontsova, Anton Konushin},
-  journal={arXiv preprint arXiv:2106.01178},
-  year={2021}
+  booktitle={Proceedings of the IEEE/CVF Winter Conference on Applications of Computer Vision},
+  pages={2397--2406},
+  year={2022}
 }
 ```

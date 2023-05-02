@@ -7,9 +7,9 @@ import warnings
 from os import path as osp
 from setuptools import find_packages, setup
 
-import torch
-from torch.utils.cpp_extension import (BuildExtension, CppExtension,
-                                       CUDAExtension)
+# import torch
+# from torch.utils.cpp_extension import (BuildExtension, CppExtension,
+#                                        CUDAExtension)
 
 
 def readme():
@@ -135,7 +135,7 @@ def parse_requirements(fname='requirements.txt', with_version=True):
     return packages
 
 
-def add_mim_extention():
+def add_mim_extension():
     """Add extra files that are required to support MIM into the package.
 
     These files will be added by creating a symlink to the originals if the
@@ -188,7 +188,7 @@ def add_mim_extention():
 
 
 if __name__ == '__main__':
-    add_mim_extention()
+    add_mim_extension()
     setup(
         name='mmdet3d',
         version=get_version(),

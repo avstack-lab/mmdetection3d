@@ -28,6 +28,20 @@ data_prefix = dict(
 backend_args = None
 
 num_points = 8192
+
+file_client_args = dict(backend='disk')
+# Uncomment the following if use ceph or other file clients.
+# See https://mmcv.readthedocs.io/en/latest/api.html#mmcv.fileio.FileClient
+# for more details.
+# file_client_args = dict(
+#     backend='petrel',
+#     path_mapping=dict({
+#         './data/scannet/':
+#         's3://openmmlab/datasets/detection3d/scannet_processed/',
+#         'data/scannet/':
+#         's3://openmmlab/datasets/detection3d/scannet_processed/'
+#     }))
+
 train_pipeline = [
     dict(
         type='LoadPointsFromFile',

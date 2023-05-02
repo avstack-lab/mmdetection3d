@@ -22,7 +22,6 @@ def axis_aligned_iou_loss(pred: Tensor, target: Tensor) -> Tensor:
     Returns:
         Tensor: IoU loss between predictions and targets.
     """
-
     axis_aligned_iou = AxisAlignedBboxOverlaps3D()(
         pred, target, is_aligned=True)
     iou_loss = 1 - axis_aligned_iou
