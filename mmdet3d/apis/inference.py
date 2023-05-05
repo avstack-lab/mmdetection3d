@@ -301,7 +301,15 @@ def inference_mono_3d_detector(model: nn.Module,
     box_type_3d, box_mode_3d = \
         get_box_type(cfg.test_dataloader.dataset.box_type_3d)
 
-    data_list = mmengine.load(ann_file)['data_list']
+
+    try:
+        data_list = mmengine.load(ann_file)['data_list']
+    except KeyError:
+        # HACK to keep some backwards compat
+        data_list = [mmengine.load(ann_file)]
+        data_list[0]['images'] = {cam_type:data_list[0]['images'][0]}
+        data_list[0]['images'][cam_type]['img_path'] = data_list[0]['images'][cam_type]['file_name']
+        data_list[0]['images'][cam_type]['cam2img'] = data_list[0]['images'][cam_type]['cam_intrinsic']
     assert len(imgs) == len(data_list)
 
     data = []
