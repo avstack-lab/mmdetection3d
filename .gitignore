@@ -1,3 +1,4 @@
+*.prof
 checkpoints
 work_dirs
 

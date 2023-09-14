@@ -127,7 +127,7 @@ def bbox_overlaps_nearest_3d(bboxes1,
             bboxes1 and bboxes2 with shape (M, N). If ``is_aligned`` is
             ``False``, return shape is M.
     """
-    assert bboxes1.size(-1) == bboxes2.size(-1) >= 7
+    assert bboxes1.size(-1) == bboxes2.size(-1) >= 7, f'{bboxes1.size(-1)}, {bboxes2.size(1)}'
 
     box_type, _ = get_box_type(coordinate)
 

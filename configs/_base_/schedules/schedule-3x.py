@@ -9,7 +9,7 @@ optim_wrapper = dict(
 )
 
 # training schedule for 1x
-train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=36, val_interval=1)
+train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=36, val_interval=36)
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
 

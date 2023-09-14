@@ -53,7 +53,7 @@ model = dict(
             sizes=[
                 [4.73, 2.08, 1.77],  # car
                 [0.91, 0.84, 1.74],  # pedestrian
-                [1.81, 0.84, 1.77]  # cyclist
+                [1.81, 0.84, 1.77]   # cyclist
             ],
             rotations=[0, 1.57],
             reshape_out=False),
