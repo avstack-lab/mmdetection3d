@@ -1,6 +1,7 @@
 # If point cloud range is changed, the models should also change their point
 # cloud range accordingly
-point_cloud_range = [0, -100, -2, 200, 100, 10]
+point_cloud_range = [-70, -100, -5, 200, 100, 10]
+
 # Using calibration info convert the Lidar-coordinate point cloud range to the
 # ego-coordinate point cloud range could bring a little promotion in nuScenes.
 # point_cloud_range = [-50, -50.8, -5, 50, 49.2, 3]
@@ -12,7 +13,7 @@ point_cloud_range = [0, -100, -2, 200, 100, 10]
 class_names = ['car', 'bicycle', 'truck', 'motorcycle']
 metainfo = dict(classes=class_names)
 dataset_type = 'CarlaDataset'
-data_root = 'data/carla/infrastructure/skip_0'
+data_root = 'data/carla/joint/skip_0/'
 # Input modality for nuScenes dataset, this is consistent with the submission
 # format which requires the information in input_modality.
 # Input modality for carla dataset

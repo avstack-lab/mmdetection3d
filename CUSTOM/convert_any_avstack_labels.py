@@ -20,7 +20,7 @@ from avstack import maskfilters
 
 def convert_avstack_to_annotation(SM, scene_splits, n_skips: int=1,
                                 lidars: list=['LIDAR_TOP'], max_sweeps=10,
-                                with_multi=False, n_max_proc=5):
+                                with_multi=False, n_max_proc=5, lidar_filter=None):
     """
     Converts avstack LiDAR data into annotation format
     
@@ -49,11 +49,16 @@ def convert_avstack_to_annotation(SM, scene_splits, n_skips: int=1,
             lidars = [sens for sens in list(SD.sensors.keys()) if
                       (('lidar' in sens.lower()) or ('velo' in sens.lower())) and 
                       (sens != 'lidar') and (sens!='main_lidar')]
+        if lidar_filter is not None:
+            lidars = [li for li in lidars if lidar_filter.lower() in li.lower()]
 
         # -- loop over sensors
         for lid in lidars:
             # -- prep filepaths --> do it the long way to save for multiprocessing memory
-            frames = SD.get_frames(sensor=lid)
+            try:
+                frames = SD.get_frames(sensor=lid)
+            except KeyError:
+                continue
             part_func = partial(process_frame, lid, obj_id_map)
             frames_all = [frames[idx] for idx in range(5, len(frames)-5, n_skips+1)]
             timestamps_all = [SD.get_timestamp(frame) for frame in frames_all]
@@ -70,6 +75,13 @@ def convert_avstack_to_annotation(SM, scene_splits, n_skips: int=1,
             lidar_filepaths = [
                 SD.get_sensor_file(frame, timestamp, lid, "data") + ".bin" for frame in frames_all
             ]
+
+            # -- HACK: update filepaths in the case of infrastructure sensing
+            if 'infra' in lid.lower():
+                for i, frame in enumerate(frames_all):
+                    lid_2 = lid + "_GROUNDED"
+                    calib_filepaths[i] = calib_filepaths[i].replace('sensor_data', 'sensor_data_grounded').replace(lid, lid_2)
+                    lidar_filepaths[i] = lidar_filepaths[i].replace('sensor_data', 'sensor_data_grounded').replace(lid, lid_2)
 
             # -- processing
             data_info_all = []
@@ -142,7 +154,7 @@ def process_frame(lid, obj_id_map, frame, timestamp, ego_filepath, obj_filepath,
     # ego = load_ego_from_file(ego_filepath)
     # ego_ref = ego.as_reference().differential(GlobalOrigin3D)
     objs = load_objects_from_file(obj_filepath)
-    # calib = load_calibration_from_file(calib_filepath)
+    calib = load_calibration_from_file(calib_filepath)
     # pc = load_lidar_from_file(lidar_filepath, frame, timestamp, calib, sensor_ID=0)
 
     # -- data info
@@ -156,6 +168,10 @@ def process_frame(lid, obj_id_map, frame, timestamp, ego_filepath, obj_filepath,
         if obj.occlusion in [Occlusion.COMPLETE]:
             continue
         bbox_3d = obj.box
+
+        # HACK: update objects in the case of infrastructure sensing
+        if 'infra' in lid.lower():
+            bbox_3d.change_reference(calib.reference)
 
         # -- store annotations
         ann_info = dict()  # needs to be inside the loop for copying purposes
@@ -177,16 +193,29 @@ def process_frame(lid, obj_id_map, frame, timestamp, ego_filepath, obj_filepath,
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Wrap avstack data to nuscenes format for training')
-    parser.add_argument('--dataset', choices=['carla', 'kitti', 'nuscenes'], help='Choice of dataset')
+    parser.add_argument('--dataset', choices=['carla', 'carla-infrastructure', 'carla-joint', 'kitti', 'nuscenes'], help='Choice of dataset')
     parser.add_argument('--subfolder', type=str, help='Save subfolder name')
     parser.add_argument('--data_dir', type=str, help='Path to main dataset storage location')
     parser.add_argument('--n_skips', default=0, type=int, help='Number of skips between frames of a sequence')
     args = parser.parse_args()
 
     # -- create scene manager and get scene splits
+    dataset = args.dataset
+    lidar_filter = None
     if args.dataset == 'carla':
         SM = avapi.carla.CarlaScenesManager(args.data_dir)
         lidars = None
+        splits_scenes = avapi.carla.get_splits_scenes(args.data_dir)
+    elif args.dataset == 'carla-infrastructure':
+        dataset = 'carla'
+        lidar_filter = 'infra'
+        SM = avapi.carla.CarlaScenesManager(args.data_dir)
+        lidars = None
+        splits_scenes = avapi.carla.get_splits_scenes(args.data_dir)
+    elif args.dataset == 'carla-joint':
+        dataset = 'carla'
+        lidars = None
+        SM = avapi.carla.CarlaScenesManager(args.data_dir)
         splits_scenes = avapi.carla.get_splits_scenes(args.data_dir)
     elif args.dataset == 'kitti':
         lidars = ['velodyne']
@@ -202,9 +231,9 @@ if __name__ == "__main__":
     # -- run main call
     for split in ['train', 'val']:
         print(f'Converting {split}...')
-        out_file = f'../data/{args.dataset}/{args.subfolder}/{split}_annotation_{args.dataset}_in_nuscenes.pkl'
+        out_file = f'../data/{dataset}/{args.subfolder}/{split}_annotation_{dataset}_in_nuscenes.pkl'
         os.makedirs(os.path.dirname(out_file), exist_ok=True)
-        data_list, obj_id_map = convert_avstack_to_annotation(SM, splits_scenes[split], n_skips=args.n_skips, lidars=lidars)
+        data_list, obj_id_map = convert_avstack_to_annotation(SM, splits_scenes[split], n_skips=args.n_skips, lidars=lidars, lidar_filter=lidar_filter)
         metainfo = dict(
             categories=obj_id_map,
             dataset=args.dataset,
