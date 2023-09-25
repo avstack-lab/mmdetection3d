@@ -14,9 +14,9 @@ import os
 import subprocess
 import sys
 
-import pytorch_sphinx_theme
-from m2r import MdInclude
-from recommonmark.transform import AutoStructify
+# import pytorch_sphinx_theme
+# from m2r import MdInclude
+# from recommonmark.transform import AutoStructify
 from sphinx.builders.html import StandaloneHTMLBuilder
 
 sys.path.insert(0, os.path.abspath('../../'))
@@ -86,7 +86,7 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 #
 # html_theme = 'sphinx_rtd_theme'
 html_theme = 'pytorch_sphinx_theme'
-html_theme_path = [pytorch_sphinx_theme.get_html_theme_path()]
+# html_theme_path = [pytorch_sphinx_theme.get_html_theme_path()]
 
 html_theme_options = {
     # 'logo_url': 'https://mmocr.readthedocs.io/en/latest/',
