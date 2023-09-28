@@ -1,8 +1,14 @@
 # model settings
 model = dict(
-    type='CascadeRCNN',
-    pretrained='torchvision://resnet50',
     _scope_='mmdet',
+    type='CascadeRCNN',
+    data_preprocessor=dict(
+        type='DetDataPreprocessor',
+        mean=[123.675, 116.28, 103.53],
+        std=[58.395, 57.12, 57.375],
+        bgr_to_rgb=True,
+        pad_mask=True,
+        pad_size_divisor=32),
     backbone=dict(
         type='ResNet',
         depth=50,
@@ -11,7 +17,8 @@ model = dict(
         frozen_stages=1,
         norm_cfg=dict(type='BN', requires_grad=True),
         norm_eval=True,
-        style='pytorch'),
+        style='pytorch',
+        init_cfg=dict(type='Pretrained', checkpoint='torchvision://resnet50')),
     neck=dict(
         type='FPN',
         in_channels=[256, 512, 1024, 2048],
@@ -128,7 +135,6 @@ model = dict(
             debug=False),
         rpn_proposal=dict(
             nms_pre=2000,
-            nms_post=2000,
             max_per_img=2000,
             nms=dict(type='nms', iou_threshold=0.7),
             min_bbox_size=0),
@@ -188,7 +194,6 @@ model = dict(
     test_cfg=dict(
         rpn=dict(
             nms_pre=1000,
-            nms_post=1000,
             max_per_img=1000,
             nms=dict(type='nms', iou_threshold=0.7),
             min_bbox_size=0),

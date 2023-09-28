@@ -23,48 +23,52 @@ backend_args = None
 train_pipeline = [
     dict(type='LoadImageFromFile', backend_args=backend_args),
     dict(type='LoadAnnotations', with_bbox=True, with_mask=True),
-    dict(
-        type='Resize',
-        img_scale=[(1280, 720), (1920, 1080)],
-        multiscale_mode='range',
-        keep_ratio=True),
-    dict(type='RandomFlip', flip_ratio=0.5),
-    dict(type='PackDetInputs'),
+    dict(type='Resize', scale=(1333, 800), keep_ratio=True),
+    dict(type='RandomFlip', prob=0.5),
+    dict(type='PackDetInputs')
 ]
 test_pipeline = [
     dict(type='LoadImageFromFile', backend_args=backend_args),
-    dict(
-        type='MultiScaleFlipAug',
-        img_scale=(1600, 900),
-        flip=False,
-        transforms=[
-            dict(type='Resize', keep_ratio=True),
-            dict(type='RandomFlip'),
-        ]),
+    dict(type='Resize', scale=(1333, 800), keep_ratio=True),
+    # If you don't have a gt annotation, delete the pipeline
+    dict(type='LoadAnnotations', with_bbox=True, with_mask=True),
     dict(
         type='PackDetInputs',
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
-                   'scale_factor')),
+                   'scale_factor'))
 ]
-data = dict(
-    samples_per_gpu=2,
-    workers_per_gpu=2,
-    train=dict(
+train_dataloader = dict(
+    batch_size=4,
+    num_workers=4,
+    persistent_workers=True,
+    sampler=dict(type='DefaultSampler', shuffle=True),
+    dataset=dict(
         type=dataset_type,
-        ann_file=data_root + 'annotations/nuimages_v1.0-train.json',
-        img_prefix=data_root,
-        classes=class_names,
-        pipeline=train_pipeline),
-    val=dict(
+        data_root=data_root,
+        ann_file='annotations/nuimages_v1.0-train.json',
+        pipeline=train_pipeline,
+        test_mode=False,
+        backend_args=backend_args))
+val_dataloader = dict(
+    batch_size=1,
+    num_workers=2,
+    persistent_workers=True,
+    sampler=dict(type='DefaultSampler', shuffle=True),
+    dataset=dict(
         type=dataset_type,
-        ann_file=data_root + 'annotations/nuimages_v1.0-val.json',
-        img_prefix=data_root,
-        classes=class_names,
-        pipeline=test_pipeline),
-    test=dict(
-        type=dataset_type,
-        ann_file=data_root + 'annotations/nuimages_v1.0-val.json',
-        img_prefix=data_root,
-        classes=class_names,
-        pipeline=test_pipeline))
-evaluation = dict(metric=['bbox', 'segm'])
+        data_root=data_root,
+        ann_file='annotations/nuimages_v1.0-val.json',
+        pipeline=test_pipeline,
+        test_mode=True,
+        backend_args=backend_args))
+test_dataloader = val_dataloader
+
+val_evaluator = dict(
+    type='CocoMetric',
+    ann_file=data_root + 'annotations/instances_val2017.json',
+    metric=['bbox', 'segm'],
+    format_only=False,
+    backend_args=backend_args)
+test_evaluator = val_evaluator
+
+# evaluation = dict(metric=['bbox', 'segm'])
