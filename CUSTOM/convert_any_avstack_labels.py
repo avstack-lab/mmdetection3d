@@ -8,16 +8,30 @@ from multiprocessing import Pool
 import avapi
 import mmengine
 import numpy as np
-from avapi.carla.dataset import read_objects_from_file
+from avapi.carla.dataset import read_objects_from_file, read_pc_from_file
 from tqdm import tqdm
 
 from avstack import calibration
 from avstack.environment.objects import Occlusion
-from avstack.geometry import PointMatrix3D
+from avstack.geometry import GlobalOrigin3D, PointMatrix3D, ReferenceFrame
+from avstack.geometry import transformations as tforms
 from avstack.sensors import LidarData
 
 
-def sensor_is_lidar(sensor, lidar_filter: str = ""):
+def agent_is_valid(SD, agent, agent_filter: str = ""):
+    aframe = list(SD.agent_files["frame"].keys())[0]
+    ag = SD.get_agent(frame=aframe, agent=agent)
+    if agent_filter == "mobile":
+        return "static" not in ag.obj_type
+    elif agent_filter == "static":
+        return "static" in ag.obj_type
+    elif agent_filter == "":
+        return True
+    else:
+        raise NotImplementedError(agent_filter)
+
+
+def sensor_is_valid(sensor, lidar_filter: str = ""):
     sens = sensor.lower()
     return (("lidar" in sens) or ("velodyne" in sens)) and (lidar_filter in sens)
 
@@ -28,7 +42,8 @@ def convert_avstack_to_annotation(
     n_skips: int = 1,
     with_multi=False,
     n_max_proc=5,
-    lidar_filter=None,
+    agent_filter="",
+    lidar_filter="",
 ):
     """
     Converts avstack LiDAR data into annotation format
@@ -55,13 +70,16 @@ def convert_avstack_to_annotation(
 
         # -- loop over sensors
         for agent in SD.sensor_IDs.keys():
+            do_projection = "static" in agent_filter
+            if not agent_is_valid(SD, agent, agent_filter=agent_filter):
+                continue
             for sensor in SD.sensor_IDs[agent]:
-                if not sensor_is_lidar(sensor, lidar_filter=lidar_filter):
+                if not sensor_is_valid(sensor, lidar_filter=lidar_filter):
                     continue
                 print(f"\nagent: {agent}, sensor: {sensor}")
                 # -- prep filepaths --> do it the long way to save for multiprocessing memory
                 frames = SD.get_frames(sensor=sensor, agent=agent)
-                part_func = partial(process_frame, sensor, obj_id_map)
+                part_func = partial(process_frame, sensor, obj_id_map, do_projection)
                 frames_all = [
                     frames[idx] for idx in range(5, len(frames) - 5, n_skips + 1)
                 ]
@@ -181,6 +199,7 @@ def load_lidar_from_file(filepath, frame, ts, calib, sensor_ID):
 def process_frame(
     lid,
     obj_id_map,
+    do_projection,
     frame,
     timestamp,
     agent_filepaths,
@@ -192,19 +211,64 @@ def process_frame(
     objs = read_objects_from_file(obj_filepath)
     calib = load_calibration_from_file(calib_filepath)
 
+    # -- project the lidar data to a nominal frame
+    if do_projection:
+        # make the new folder to save data
+        filepath = lidar_filepath.split("/")
+        filepath[-3] += "-projected"
+        filepath = os.path.join(*filepath)
+        if lidar_filepath[0] == "/":
+            if filepath[0] != "/":
+                filepath = "/" + filepath
+
+        # get the new reference frame
+        ref_integ = calib.reference.integrate(start_at=GlobalOrigin3D)
+        x_new = np.array([*ref_integ.x[:2], 0])
+        q_new = tforms.transform_orientation(
+            [0, 0, tforms.transform_orientation(ref_integ.q, "quat", "euler")[2]],
+            "euler",
+            "quat",
+        )
+        ref_new = ReferenceFrame(x=x_new, q=q_new, reference=GlobalOrigin3D)
+
+        # perform compensation and save new file
+        if not os.path.exists(filepath):
+            os.makedirs(os.path.dirname(filepath), exist_ok=True)
+            calib.reference = ref_new
+            pc = PointMatrix3D(
+                x=read_pc_from_file(lidar_filepath, n_features=4, filter_front=False),
+                calibration=calib,
+            )
+            pc_new = pc.change_reference(ref_new, inplace=False)
+            pc = LidarData(
+                data=pc_new,
+                calibration=calib,
+                timestamp=timestamp,
+                frame=frame,
+                source_ID=lid,
+            )
+            pc.save_to_file(filepath)
+    else:
+        filepath = lidar_filepath
+
     # -- data info
     data_info = dict()
-    data_info["lidar_path"] = lidar_filepath
+    data_info["lidar_path"] = filepath
     data_info["num_pts_feats"] = None
 
     # -- annotation information
     instances = []
     for obj in objs:
+        # filter for occlusion
         if obj.occlusion in [Occlusion.COMPLETE]:
             continue
         elif obj.occlusion == Occlusion.UNKNOWN:
             raise RuntimeError("Cannot process unknown occlusion")
         bbox_3d = obj.box
+
+        # do projection if needed
+        if do_projection:
+            bbox_3d.change_reference(ref_new, inplace=True)
 
         # -- store annotations
         ann_info = dict()  # needs to be inside the loop for copying purposes
@@ -214,7 +278,7 @@ def process_frame(
         ann_info["bbox_3d"] = [
             *bbox_3d.position.x,
             *reversed(bbox_3d.hwl),
-            *[bbox_3d.yaw, 0, 0],
+            bbox_3d.yaw,
         ]
         # ann_info['bbox_3d'][2] = 0  # HACK: consider the bottom of the box.
         ann_info[
@@ -236,7 +300,13 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--dataset",
-        choices=["carla", "carla-infrastructure", "carla-joint", "kitti", "nuscenes"],
+        choices=[
+            "carla-vehicle",
+            "carla-infrastructure",
+            "carla-joint",
+            "kitti",
+            "nuscenes",
+        ],
         help="Choice of dataset",
     )
     parser.add_argument("--subfolder", type=str, help="Save subfolder name")
@@ -253,13 +323,16 @@ if __name__ == "__main__":
 
     # -- create scene manager and get scene splits
     dataset = args.dataset
+    agent_filter = ""
     lidar_filter = ""
-    if args.dataset == "carla":
+    if args.dataset == "carla-vehicle":
+        dataset = "carla"
+        agent_filter = "mobile"
         SM = avapi.carla.CarlaScenesManager(args.data_dir)
         splits_scenes = avapi.carla.get_splits_scenes(args.data_dir)
     elif args.dataset == "carla-infrastructure":
         dataset = "carla"
-        lidar_filter = "infra"
+        agent_filter = "static"
         SM = avapi.carla.CarlaScenesManager(args.data_dir)
         splits_scenes = avapi.carla.get_splits_scenes(args.data_dir)
     elif args.dataset == "carla-joint":
@@ -281,7 +354,11 @@ if __name__ == "__main__":
         out_file = f"../data/{dataset}/{args.subfolder}/{split}_annotation_{dataset}_in_nuscenes.pkl"
         os.makedirs(os.path.dirname(out_file), exist_ok=True)
         data_list, obj_id_map = convert_avstack_to_annotation(
-            SM, splits_scenes[split], n_skips=args.n_skips, lidar_filter=lidar_filter
+            SM,
+            splits_scenes[split],
+            n_skips=args.n_skips,
+            agent_filter=agent_filter,
+            lidar_filter=lidar_filter,
         )
         metainfo = dict(
             categories=obj_id_map,

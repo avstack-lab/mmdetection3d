@@ -12,7 +12,7 @@ point_cloud_range = [-70, -50, -5, 70, 50, 5]
 class_names = ['car', 'bicycle', 'truck', 'motorcycle']
 metainfo = dict(classes=class_names)
 dataset_type = 'CarlaDataset'
-data_root = 'data/carla/ego-lidar/'
+data_root = 'data/carla/vehicle/skip_0'
 # Input modality for nuScenes dataset, this is consistent with the submission
 # format which requires the information in input_modality.
 # Input modality for carla dataset
