@@ -13,8 +13,7 @@ from tqdm import tqdm
 
 from avstack import calibration
 from avstack.environment.objects import Occlusion
-from avstack.geometry import GlobalOrigin3D, PointMatrix3D, ReferenceFrame
-from avstack.geometry import transformations as tforms
+from avstack.geometry import PointMatrix3D
 from avstack.sensors import LidarData
 
 
@@ -284,7 +283,7 @@ def process_frame(
         # -- modifications:
         # (1) box is bottom centered
         if bbox_3d.where_is_t == "center":
-            ann_info["bbox_3d"][2] -= bbox_3d.h/2
+            ann_info["bbox_3d"][2] -= bbox_3d.h / 2
 
         # (2) yaw is defined as: yaw=0 --> along x, yaw=pi/2 --> along y
         pass  # already this way
