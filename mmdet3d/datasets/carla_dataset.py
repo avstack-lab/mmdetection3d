@@ -159,19 +159,19 @@ class CarlaDataset(Det3DDataset):
                 ann_info['centers_2d'] = np.zeros((0, 2), dtype=np.float32)
                 ann_info['depths'] = np.zeros((0), dtype=np.float32)
 
-        # the nuscenes box center is [0.5, 0.5, 0.5], we change it to be
-        # the same as KITTI (0.5, 0.5, 0)
+        # the carla box center is [0.5, 0.5, 0] which is the 
+        # same as KITTI
         # TODO: Unify the coordinates
         if self.load_type in ['fov_image_based', 'mv_image_based']:
             gt_bboxes_3d = CameraInstance3DBoxes(
                 ann_info['gt_bboxes_3d'],
                 box_dim=ann_info['gt_bboxes_3d'].shape[-1],
-                origin=(0.5, 0.5, 0.5))
+                origin=(0.5, 0.5, 0.0))
         else:
             gt_bboxes_3d = LiDARInstance3DBoxes(
                 ann_info['gt_bboxes_3d'],
                 box_dim=ann_info['gt_bboxes_3d'].shape[-1],
-                origin=(0.5, 0.5, 0.5)).convert_to(self.box_mode_3d)
+                origin=(0.5, 0.5, 0.0)).convert_to(self.box_mode_3d)
 
         ann_info['gt_bboxes_3d'] = gt_bboxes_3d
 

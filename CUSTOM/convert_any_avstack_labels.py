@@ -206,6 +206,7 @@ def process_frame(
     obj_filepath,
     calib_filepath,
     lidar_filepath,
+    nominal_height=1.8,
 ):
     # -- load information
     objs = read_objects_from_file(obj_filepath)
@@ -222,14 +223,7 @@ def process_frame(
                 filepath = "/" + filepath
 
         # get the new reference frame
-        ref_integ = calib.reference.integrate(start_at=GlobalOrigin3D)
-        x_new = np.array([*ref_integ.x[:2], 0])
-        q_new = tforms.transform_orientation(
-            [0, 0, tforms.transform_orientation(ref_integ.q, "quat", "euler")[2]],
-            "euler",
-            "quat",
-        )
-        ref_new = ReferenceFrame(x=x_new, q=q_new, reference=GlobalOrigin3D)
+        ref_new = calib.reference.get_ground_projected_reference()
 
         # perform compensation and save new file
         if not os.path.exists(filepath):
@@ -280,13 +274,26 @@ def process_frame(
             *reversed(bbox_3d.hwl),
             bbox_3d.yaw,
         ]
-        # ann_info['bbox_3d'][2] = 0  # HACK: consider the bottom of the box.
         ann_info[
             "num_lidar_pts"
         ] = 400  # HACK: make this wayyy faster by ignoring sum(maskfilters.filter_points_in_box(pc, bbox_3d.corners))
         ann_info["num_radar_pts"] = 0
         ann_info["velocity"] = obj.velocity.x[:2]
         ann_info["token"] = -1
+
+        # -- modifications:
+        # (1) box is bottom centered
+        if bbox_3d.where_is_t == "center":
+            ann_info["bbox_3d"][2] -= bbox_3d.h/2
+
+        # (2) yaw is defined as: yaw=0 --> along x, yaw=pi/2 --> along y
+        pass  # already this way
+
+        # (3) the anchor generation assumes a nominal sensor height
+        dx = nominal_height - bbox_3d.reference.x[2]
+        ann_info["bbox_3d"][2] -= dx
+
+        print(ann_info["bbox_3d"][2])
 
         # -- merge infos
         instances.append(ann_info)

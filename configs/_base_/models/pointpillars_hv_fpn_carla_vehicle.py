@@ -6,7 +6,8 @@ _base_ = './pointpillars_hv_fpn_nus.py'
 # If point cloud range is modified, do remember to change all related
 # keys in the config.
 pc_range = [-100, -100, -5, 100, 100, 5]
-anchor_range = [-100, -100, -1.8, 100, 100, -1.8]
+nom_h = 1.8  # using a nominal height - this number must be in dataset conversion scripts
+anchor_range = [-100, -100, -nom_h, 100, 100, -nom_h] 
 num_classes = 4
 
 model = dict(

@@ -12,7 +12,7 @@ point_cloud_range = [0, -100, -2, 200, 100, 10]
 class_names = ['car', 'bicycle', 'truck', 'motorcycle']
 metainfo = dict(classes=class_names)
 dataset_type = 'CarlaDataset'
-data_root = 'data/carla/infrastructure/skip_0'
+data_root = 'data/carla/infrastructure/skip_0/'  # trailing / is necessary
 # Input modality for nuScenes dataset, this is consistent with the submission
 # format which requires the information in input_modality.
 # Input modality for carla dataset
