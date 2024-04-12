@@ -7,7 +7,7 @@ _base_ = './pointpillars_hv_fpn_nus.py'
 # keys in the config.
 pc_range = [-100, -100, -5, 100, 100, 5]
 nom_h = 1.8  # using a nominal height - this number must be in dataset conversion scripts
-anchor_range = [-100, -100, -nom_h, 100, 100, -nom_h] 
+anchor_range = [-100, -100, -nom_h, 100, 100, -nom_h]
 num_classes = 4
 
 model = dict(

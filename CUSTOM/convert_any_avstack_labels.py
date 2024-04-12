@@ -1,5 +1,4 @@
 import argparse
-import json
 import logging
 import os
 from functools import partial
@@ -8,10 +7,13 @@ from multiprocessing import Pool
 import avapi
 import mmengine
 import numpy as np
-from avapi.carla.dataset import read_objects_from_file, read_pc_from_file
+from avapi.carla.dataset import (
+    read_calibration_from_file,
+    read_objects_from_file,
+    read_pc_from_file,
+)
 from tqdm import tqdm
 
-from avstack import calibration
 from avstack.environment.objects import Occlusion
 from avstack.geometry import PointMatrix3D
 from avstack.sensors import LidarData
@@ -182,19 +184,6 @@ def convert_avstack_to_annotation(
     return data_list, obj_id_map
 
 
-def load_calibration_from_file(filepath):
-    with open(filepath, "r") as f:
-        calib = json.load(f, cls=calibration.CalibrationDecoder)
-    return calib
-
-
-def load_lidar_from_file(filepath, frame, ts, calib, sensor_ID):
-    data = np.fromfile(filepath, dtype=np.float32).reshape((-1, 4))
-    data = PointMatrix3D(data, calib)
-    pc = LidarData(ts, frame, data, calib, sensor_ID)
-    return pc
-
-
 def process_frame(
     lid,
     obj_id_map,
@@ -209,7 +198,7 @@ def process_frame(
 ):
     # -- load information
     objs = read_objects_from_file(obj_filepath)
-    calib = load_calibration_from_file(calib_filepath)
+    calib = read_calibration_from_file(calib_filepath)
 
     # -- project the lidar data to a nominal frame
     if do_projection:
@@ -221,26 +210,20 @@ def process_frame(
             if filepath[0] != "/":
                 filepath = "/" + filepath
 
-        # get the new reference frame
-        ref_new = calib.reference.get_ground_projected_reference()
-
         # perform compensation and save new file
-        if not os.path.exists(filepath):
-            os.makedirs(os.path.dirname(filepath), exist_ok=True)
-            calib.reference = ref_new
-            pc = PointMatrix3D(
-                x=read_pc_from_file(lidar_filepath, n_features=4, filter_front=False),
-                calibration=calib,
-            )
-            pc_new = pc.change_reference(ref_new, inplace=False)
-            pc = LidarData(
-                data=pc_new,
-                calibration=calib,
-                timestamp=timestamp,
-                frame=frame,
-                source_ID=lid,
-            )
-            pc.save_to_file(filepath)
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+        pc_data = PointMatrix3D(
+            x=read_pc_from_file(lidar_filepath, n_features=4, filter_front=False),
+            calibration=calib,
+        )
+        pc = LidarData(
+            data=pc_data,
+            calibration=calib,
+            timestamp=timestamp,
+            frame=frame,
+            source_ID=lid,
+        ).transform_to_ground()
+        pc.save_to_file(filepath)
     else:
         filepath = lidar_filepath
 
@@ -261,7 +244,7 @@ def process_frame(
 
         # do projection if needed
         if do_projection:
-            bbox_3d.change_reference(ref_new, inplace=True)
+            bbox_3d.change_reference(pc.reference, inplace=True)
 
         # -- store annotations
         ann_info = dict()  # needs to be inside the loop for copying purposes
@@ -291,8 +274,6 @@ def process_frame(
         # (3) the anchor generation assumes a nominal sensor height
         dx = nominal_height - bbox_3d.reference.x[2]
         ann_info["bbox_3d"][2] -= dx
-
-        print(ann_info["bbox_3d"][2])
 
         # -- merge infos
         instances.append(ann_info)
