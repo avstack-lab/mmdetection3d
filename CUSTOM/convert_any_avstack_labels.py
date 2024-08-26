@@ -256,9 +256,9 @@ def process_frame(
             *reversed(bbox_3d.hwl),
             bbox_3d.yaw,
         ]
-        ann_info[
-            "num_lidar_pts"
-        ] = 400  # HACK: make this wayyy faster by ignoring sum(maskfilters.filter_points_in_box(pc, bbox_3d.corners))
+        ann_info["num_lidar_pts"] = (
+            400  # HACK: make this wayyy faster by ignoring sum(maskfilters.filter_points_in_box(pc, bbox_3d.corners))
+        )
         ann_info["num_radar_pts"] = 0
         ann_info["velocity"] = obj.velocity.x[:2]
         ann_info["token"] = -1
